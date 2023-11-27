@@ -61,20 +61,20 @@ namespace Walhalla
         public static bool NotEmpty<T>(this T[] array) => array != null && array.Length > 0;
         public static bool IsEmpty<T>(this T[] array) => !NotEmpty(array);
 
-        public static T RandomElement<T>(this T[] array, T @default = default(T)) => array.NotEmpty() ? array[Random.RangeInt(0, array.Length)] : @default;
-        public static T GetClampedElement<T>(this T[] array, int index) => array.IsEmpty() ? default(T) : array[Math.Clamp(index, 0, array.Length - 1)];
+        public static T? RandomElement<T>(this T[]? array, T? @default = default) => array != null && array.NotEmpty() ? array[Random.RangeInt(0, array.Length)] : @default;
+        public static T? GetClampedElement<T>(this T[]? array, int index) => array == null || array.IsEmpty() ? default : array[Math.Clamp(index, 0, array.Length - 1)];
         #endregion
 
         #region List Functions (Explain themselves)
         public static bool NotEmpty<T>(this List<T> list) => list != null && list.Count > 0;
         public static bool IsEmpty<T>(this List<T> list) => !NotEmpty(list);
 
-        public static T RandomElement<T>(this List<T> list, T @default = default(T)) => list.NotEmpty() ? list[Random.RangeInt(0, list.Count)] : @default;
+        public static T? RandomElement<T>(this List<T> list, T? @default = default) => list.NotEmpty() ? list[Random.RangeInt(0, list.Count)] : @default;
         #endregion
 
         #region Dictionary Functions (Explain themselves)
-        public static bool NotEmpty<T, U>(this Dictionary<T, U> dic) => dic != null && dic.Count > 0;
-        public static bool IsEmpty<T, U>(this Dictionary<T, U> dic) => !NotEmpty(dic);
+        public static bool NotEmpty<T, U>(this Dictionary<T, U> dic) where T : notnull => dic != null && dic.Count > 0;
+        public static bool IsEmpty<T, U>(this Dictionary<T, U> dic) where T : notnull => !NotEmpty(dic);
         #endregion
 
         #region Float Functions (Explain themselves)
@@ -169,8 +169,8 @@ namespace Walhalla
         public static bool NotEmpty(this string? value) => !IsEmpty(value);
 
         // Kind of splits up a string to only write down the contents between the signals. Nice for a lot of stuff.
-        public static string Extract(this string source, char signal, out string[] extracted, bool removeSignal = true) => Extract(source, new List<char>() { signal }, out extracted, removeSignal);
-        public static string Extract(this string source, List<char> signals, out string[] extracted, bool removeSignals = true)
+        public static string Extract(this string source, char signal, out string[]? extracted, bool removeSignal = true) => Extract(source, new List<char>() { signal }, out extracted, removeSignal);
+        public static string Extract(this string source, List<char> signals, out string[]? extracted, bool removeSignals = true)
         {
             extracted = null;
 
