@@ -6,12 +6,12 @@ namespace Walhalla
         /// <summary>
         /// Writes a new line into the console
         /// </summary>
-        public static void Log(this string line) => Console.WriteLine(line);
+        public static void Log(this object line) => Console.WriteLine(line);
 
         /// <summary>
         /// Writes plain text with no paragraphs
         /// </summary>
-        public static void Log2(this string line) => Console.Write(line);
+        public static void Log2(this object line) => Console.Write(line);
         #endregion
 
         #region Text Color

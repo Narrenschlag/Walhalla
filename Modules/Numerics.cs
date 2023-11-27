@@ -21,6 +21,11 @@ namespace Walhalla
             return new Vector2(v1.X - v2.X, v1.Y - v2.Y);
         }
 
+        public static float operator *(Vector2 v1, Vector2 v2)
+        {
+            return v1.X * v2.X + v1.Y * v2.Y;
+        }
+
         #region Scalar Product
         public static Vector2 operator *(Vector2 v1, float m)
         {
@@ -32,11 +37,6 @@ namespace Walhalla
             return new Vector2(v1.X / m, v1.Y / m);
         }
         #endregion
-
-        public static float operator *(Vector2 v1, Vector2 v2)
-        {
-            return v1.X * v2.X + v1.Y * v2.Y;
-        }
 
         public static float Distance(Vector2 v1, Vector2 v2)
         {
