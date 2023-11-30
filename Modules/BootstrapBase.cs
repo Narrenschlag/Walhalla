@@ -4,8 +4,7 @@ namespace Walhalla
 {
     public class BootstrapBase
     {
-        public static bool LogToConsole = true;
-        public static bool SafeMode = false;
+        public static BootConfiguration? Config;
 
         /// <summary>
         /// Starts the boot manager. This can be used to setup everything.
@@ -17,13 +16,11 @@ namespace Walhalla
             TitleText().Log();
             OpeningText().Log();
 
-            Debug.SetColor(2);
-            "FLAGS: ".Log2();
-            Debug.ResetColor();
-
-            string? input = Console.ReadLine();
-            AssignFlags(input == null || input.IsEmpty() ? "" : input);
-            LogFlags();
+            // Boot Config and log
+            Road p = new Road("configuration/boot.config");
+            if (!p.TryRead(out Config) || Config == null)
+                p.Write(new BootConfiguration());
+            LogConfig();
 
             "\nStarting...".Log();
 
@@ -53,26 +50,18 @@ namespace Walhalla
 
         protected virtual string OpeningText() =>
             $"\nWelcome to the boot manager. This is where you can configure your boot flags.\n"
-            + "Are you ready to boot?\n\n"
-            + "> You can enter additional flags now or just press return.\n"
+            + "> You can configure your flags in './configuration/boot.config'.\n"
             + "> (For more information about flags please contact the admin)";
 
-        protected virtual void AssignFlags(string input)
+        protected virtual void LogConfig()
         {
-            // -noLog           prevents application from logging messages to the terminal
-            // -safe            puts application into safe mode and throws the whole programm at the first error
+            if (Config == null) return;
 
-            LogToConsole = !input.Contains("-nolog");
-            SafeMode = input.Contains("-safe");
-        }
-
-        protected virtual void LogFlags()
-        {
             2.SetColor();
             "\nBoot Settings ----------------".Log();
             logFlagEntries(new (string, bool)[]{
-                    ("safe mode", SafeMode),
-                    ("debug logs", LogToConsole)
+                    ("safe mode", Config.SafeMode),
+                    ("debug logs", Config.Debug)
             }).Log();
             Debug.ResetColor();
         }
@@ -93,5 +82,11 @@ namespace Walhalla
                 $"{2.GetColor()}{97.GetColor()}{name.ToUpper()}   {(enabled ? $"{92.GetColor()}ON" : $"{91.GetColor()}OFF")}";
 
         protected virtual void BootLogic() { }
+    }
+
+    public class BootConfiguration
+    {
+        public bool SafeMode;
+        public bool Debug;
     }
 }
