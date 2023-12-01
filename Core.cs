@@ -100,6 +100,9 @@ namespace Walhalla
         public static int min(this int f0, int f1) => Math.Min(f0, f1);
         public static int min(this int f0, int f1, int f2) => min(min(f0, f1), f2);
         public static int min(this int f0, int f1, int f2, int f3) => min(min(f0, f1, f2), f3);
+
+        public static uint toUInt(this int i) => (uint)(i + int.MaxValue + 1);
+        public static int toInt(this uint u) => (int)u - int.MaxValue - 1;
         #endregion
 
         #region String Functions
