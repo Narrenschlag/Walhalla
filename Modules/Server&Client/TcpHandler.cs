@@ -1,6 +1,7 @@
 using System.Net.Sockets;
 using System.IO;
 using System;
+using System.Threading.Tasks;
 
 namespace Walhalla
 {
@@ -10,10 +11,10 @@ namespace Walhalla
         public TcpClient client;
 
         public delegate void TcpPacket(BufferType type, byte key, byte[]? bytes);
-        public TcpPacket onReceive;
+        public TcpPacket? onReceive;
 
         public delegate void Empty();
-        public Empty onDisconnect;
+        public Empty? onDisconnect;
 
         public TcpHandler(ref TcpClient client, uint welcome, TcpPacket onReceive, Empty onDisconnect, int receiveTimeout = 5)
         {
@@ -43,8 +44,7 @@ namespace Walhalla
             _listen();
         }
 
-        public bool Connected => client.Connected;
-
+        public bool Connected => client != null && client.Connected;
         public void close()
         {
             if (stream != null) stream.Close();
@@ -73,22 +73,27 @@ namespace Walhalla
         #endregion
 
         #region Receive Data
-        private void _listen()
+        private async void _listen()
         {
-            if (client.Connected)
-                try { _receive(); }
-                catch { }
+            while (Connected)
+            {
+                try { await _receive(); }
+                catch { break; }
+            }
 
             _onDisconnect();
         }
 
-        private async void _receive()
+        private async Task _receive()
         {
             // Define buffer for strorage
             byte[] buffer = new byte[4];
 
             // Read length
-            await stream.ReadAsync(buffer, 0, 4);
+            int i = await stream.ReadAsync(buffer, 0, 4);
+
+            // Catches disconnect StackOverflow
+            if (i < 4) throw new IOException("connection corrupted");
 
             // Read length of buffer
             int length = 0;
@@ -105,9 +110,6 @@ namespace Walhalla
 
             bytes = Bufferf.decodeBytes(buffer, out length, out BufferType type, out byte key);
             if (onReceive != null && type != BufferType.None) onReceive(type, key, bytes);
-
-            // Restart listen
-            _listen();
         }
         #endregion
 
