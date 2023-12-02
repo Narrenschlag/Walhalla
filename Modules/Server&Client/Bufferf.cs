@@ -1,3 +1,6 @@
+using System.IO;
+using System;
+
 using Enc = System.Text.Encoding;
 namespace Walhalla
 {
@@ -100,6 +103,30 @@ namespace Walhalla
             else if (value is char) return BufferType.Char;
 
             return BufferType.None;
+        }
+
+        public static Type getType(this BufferType type)
+        {
+            // Boolean + Byte
+            switch (type)
+            {
+                case BufferType.Boolean: return typeof(bool);
+                case BufferType.Byte: return typeof(byte);
+
+                case BufferType.Short: return typeof(short);
+                case BufferType.UnsignedShort: return typeof(ushort);
+
+                case BufferType.Integer: return typeof(int);
+                case BufferType.UnsignedInteger: return typeof(uint);
+
+                case BufferType.Float: return typeof(float);
+                case BufferType.Double: return typeof(double);
+
+                case BufferType.String: return typeof(string);
+                case BufferType.Char: return typeof(char);
+
+                default: return typeof(object);
+            }
         }
         #endregion
 

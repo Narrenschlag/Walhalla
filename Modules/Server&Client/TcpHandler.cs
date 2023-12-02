@@ -68,7 +68,7 @@ namespace Walhalla
         }
 
         /// <summary> Sends data through connection </summary>
-        public void send(BufferType type, byte key, byte[]? bytes, bool flush = true)
+        public void send(byte key, BufferType type, byte[]? bytes, bool flush = true)
         {
             if (bytes == null) bytes = new byte[0];
 

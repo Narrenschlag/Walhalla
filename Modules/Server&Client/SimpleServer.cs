@@ -50,6 +50,36 @@ namespace Walhalla
         {
             new SimpleClient(ref tcp, uid, ref Clients);
         }
+
+        #region Broadcasting
+        /// <summary> Broadcast to all clients </summary>
+        public virtual void Broadcast<T>(byte key, T value, bool tcp) => Broadcast(key, value, tcp, Clients != null ? Clients.Values : null);
+
+        /// <summary> Broadcast to selected clients </summary>
+        public virtual void Broadcast<T>(byte key, T value, bool tcp, ICollection<ClientBase>? receivers)
+        {
+            if (receivers == null || receivers.Count < 1) return;
+
+            foreach (ClientBase client in receivers)
+            {
+                client.send(key, value, tcp);
+            }
+        }
+
+        /// <summary> Broadcast to all clients </summary>
+        public virtual void Broadcast(byte key, BufferType type, byte[] bytes, bool tcp) => Broadcast(key, type, bytes, tcp, Clients != null ? Clients.Values : null);
+
+        /// <summary> Broadcast to selected clients </summary>        
+        public virtual void Broadcast(byte key, BufferType type, byte[] bytes, bool tcp, ICollection<ClientBase>? receivers)
+        {
+            if (receivers == null || receivers.Count < 1) return;
+
+            foreach (ClientBase client in receivers)
+            {
+                client.send(key, type, bytes, tcp);
+            }
+        }
+        #endregion
     }
 
     public class SimpleClient : ClientBase
@@ -66,12 +96,16 @@ namespace Walhalla
 
         public override void send<T>(byte key, T value, bool tcp)
         {
+            base.send(key, value, tcp);
+
             if (tcp) this.tcp.send(key, value);
         }
 
-        public override void send(BufferType type, byte key, byte[]? bytes, bool tcp)
+        public override void send(byte key, BufferType type, byte[]? bytes, bool tcp)
         {
-            if (tcp) this.tcp.send(type, key, bytes);
+            base.send(key, type, bytes, tcp);
+
+            if (tcp) this.tcp.send(key, type, bytes);
         }
     }
 }
@@ -96,10 +130,10 @@ public class ClientBase
 
     public virtual void send<T>(byte key, T value, bool tcp)
     {
-
+        $"{UID}: send".Log();
     }
 
-    public virtual void send(BufferType type, byte key, byte[]? bytes, bool tcp)
+    public virtual void send(byte key, BufferType type, byte[]? bytes, bool tcp)
     {
 
     }

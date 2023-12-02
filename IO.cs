@@ -14,7 +14,7 @@ namespace Walhalla
         public static bool FileExists(this string path) => F.Exists(path);
 
         #region JSON Utility
-        public static string json(this object? source) => JsonSerializer.Serialize(source);
+        public static string json<T>(this T source) => JsonSerializer.Serialize(source == null ? default(T) : source);
         public static T? json<T>(this string? json) => json == null || json.IsEmpty() ? default(T) : JsonSerializer.Deserialize<T>(json);
         #endregion
     }
@@ -65,7 +65,7 @@ namespace Walhalla
             else F.WriteAllBytes(path(), buffer);
         }
 
-        public void Write(object jsonObject, bool async = false) => Write(jsonObject.json(), async);
+        public void Write<T>(T jsonObject, bool async = false) => Write(jsonObject.json(), async);
         public void Write(string text, bool async = false)
         {
             if (!FileExists()) mkDir();

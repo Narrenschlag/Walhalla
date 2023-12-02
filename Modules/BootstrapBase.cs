@@ -89,7 +89,7 @@ namespace Walhalla
 
     public class BootConfigurationBase
     {
-        public bool SafeMode;
-        public bool Debug;
+        public bool SafeMode { get; set; }
+        public bool Debug { get; set; }
     }
 }

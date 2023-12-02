@@ -30,12 +30,16 @@ namespace Walhalla
 
         public override void send<T>(byte key, T value, bool tcp)
         {
+            base.send(key, value, tcp);
+
             if (!tcp) udp.send(key, value);
         }
 
-        public override void send(BufferType type, byte key, byte[]? bytes, bool tcp)
+        public override void send(byte key, BufferType type, byte[]? bytes, bool tcp)
         {
-            if (!tcp) udp.send(type, key, bytes);
+            base.send(key, type, bytes, tcp);
+
+            if (!tcp) udp.send(key, type, bytes);
         }
 
         private void receiveUdp(BufferType type, byte key, byte[]? bytes)
