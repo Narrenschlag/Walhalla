@@ -19,7 +19,7 @@ namespace Walhalla
             LastUID = 0;
             Port = port;
 
-            TcpListener = new TcpListener(IPAddress.Loopback, port);
+            TcpListener = new TcpListener(IPAddress.Any, port);
             TcpListener.Start(10);
 
             // Async client accept
