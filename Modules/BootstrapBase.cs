@@ -2,9 +2,9 @@ using System.Text;
 
 namespace Walhalla
 {
-    public class BootstrapBase
+    public class BootstrapBase<ConigClass> where ConigClass : BootConfigurationBase, new()
     {
-        public static BootConfiguration? Config;
+        public static ConigClass? Config;
 
         /// <summary>
         /// Starts the boot manager. This can be used to setup everything.
@@ -20,7 +20,7 @@ namespace Walhalla
             Road p = new Road("configuration/boot.config");
             if (!p.TryRead(out Config) || Config == null)
             {
-                Config = new BootConfiguration();
+                Config = new ConigClass();
                 p.Write(Config);
             }
             LogConfig();
@@ -87,7 +87,7 @@ namespace Walhalla
         protected virtual void BootLogic() { }
     }
 
-    public class BootConfiguration
+    public class BootConfigurationBase
     {
         public bool SafeMode;
         public bool Debug;
