@@ -7,7 +7,7 @@ namespace Walhalla
     public static class Bufferf
     {
         #region Translation
-        public static byte[] toBytes<T>(this T? value, out BufferType typeId)
+        public static byte[] toBytes<T>(this T value, out BufferType typeId)
         {
             if (value == null)
             {
@@ -49,12 +49,12 @@ namespace Walhalla
             byte[] @default() => new byte[0];
         }
 
-        public static T? fromBytes<T>(this byte[]? bytes)
+        public static T? fromBytes<T>(this byte[] bytes)
         {
             if (bytes == null)
             {
                 "!!! WARNING !!!\nWas unable to fetch data from package due to it being emtpy".Log();
-                return default(T);
+                return default;
             }
 
             switch (getTypeId(default(T)))
