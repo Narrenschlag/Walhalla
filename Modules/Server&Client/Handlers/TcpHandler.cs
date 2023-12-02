@@ -22,7 +22,7 @@ namespace Walhalla
 
             this.onDisconnect = onDisconnect;
             send(0, welcome);
-            _ = _listen();
+            _listen();
         }
 
         /// <summary> Creates handle on client side </summary>
@@ -35,7 +35,7 @@ namespace Walhalla
             stream = client.GetStream();
 
             this.onDisconnect = onDisconnect;
-            _ = _listen();
+            _listen();
         }
 
         /// <summary> Returns if the client is connected </summary>
@@ -77,14 +77,22 @@ namespace Walhalla
         #endregion
 
         #region Receive Data
-        protected override async Task _listen()
+        protected async void _listen()
         {
-            await base._listen();
+            while (Connected)
+            {
+                try { await _receive(); }
+                catch (Exception ex)
+                {
+                    ex.Message.Log();
+                    break;
+                }
+            }
 
             _onDisconnect();
         }
 
-        protected override async Task _receive()
+        protected async Task _receive()
         {
             // Define buffer for strorage
             byte[] buffer = new byte[4];
@@ -115,10 +123,10 @@ namespace Walhalla
 
         private void _onDisconnect()
         {
-            Close();
-
             if (onDisconnect != null)
                 onDisconnect();
+
+            Close();
         }
     }
 }

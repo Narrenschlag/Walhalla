@@ -14,14 +14,13 @@ namespace Walhalla
             try
             {
                 client = new UdpClient(port);
-                $"udp: {port}".Log();
             }
             catch (Exception ex)
             {
                 throw new Exception($"Was not able to establish a udp connection:\n{ex.Message}");
             }
 
-            _ = _listen();
+            _listen();
         }
 
         /// <summary> Creates handle on client side </summary>
@@ -30,8 +29,11 @@ namespace Walhalla
             client = new UdpClient();
             client.Connect(host, port);
 
-            _ = _listen();
+            _listen();
         }
+
+        /// <summary> Returns if the client is connected </summary>
+        public override bool Connected => client != null && client.Client != null && client.Client.Connected;
 
         /// <summary> Closes local network elements </summary>
         public override void Close()
@@ -61,7 +63,16 @@ namespace Walhalla
         #endregion
 
         #region Receive Data
-        protected override async Task _receive()
+        private async void _listen()
+        {
+            while (Connected)
+            {
+                try { await _receive(); }
+                catch { break; }
+            }
+        }
+
+        private async Task _receive()
         {
             // Read length
             UdpReceiveResult result = await client.ReceiveAsync();

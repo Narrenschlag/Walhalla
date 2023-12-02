@@ -29,20 +29,25 @@ namespace Walhalla
         public AdvancedClient(ref TcpClient client, uint uid, ref Dictionary<uint, ClientBase> registry, int udpPort) : base(ref client, uid, ref registry)
         {
             udp = new UdpHandler(udpPort, receiveUdp);
+
+            $"#######\nConnected: {Connected}\ntcp-connection: {tcp.Connected}\nudp-connection: {udp.Connected}\n#######".Log();
         }
+
+        public override bool Connected => base.Connected && ConnectedUdp;
+        public bool ConnectedUdp => udp != null && udp.Connected;
 
         public override void send<T>(byte key, T value, bool tcp)
         {
             base.send(key, value, tcp);
 
-            if (!tcp) udp.send(key, value);
+            if (!tcp && ConnectedUdp) udp.send(key, value);
         }
 
         public override void send(byte key, BufferType type, byte[] bytes, bool tcp)
         {
             base.send(key, type, bytes, tcp);
 
-            if (!tcp) udp.send(key, type, bytes);
+            if (!tcp && ConnectedUdp) udp.send(key, type, bytes);
         }
 
         private void receiveUdp(BufferType type, byte key, byte[] bytes)

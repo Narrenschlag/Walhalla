@@ -93,6 +93,9 @@ namespace Walhalla
             tcp = new TcpHandler(ref client, uid, receiveTcp, onDisconnect);
         }
 
+        public virtual bool Connected => ConnectedTcp;
+        public bool ConnectedTcp => tcp != null && tcp.Connected;
+
         private void receiveTcp(BufferType type, byte key, byte[] bytes)
             => onReceive(type, key, bytes, true);
 
@@ -100,14 +103,14 @@ namespace Walhalla
         {
             base.send(key, value, tcp);
 
-            if (tcp) this.tcp.send(key, value);
+            if (tcp && ConnectedTcp) this.tcp.send(key, value);
         }
 
         public override void send(byte key, BufferType type, byte[] bytes, bool tcp)
         {
             base.send(key, type, bytes, tcp);
 
-            if (tcp) this.tcp.send(key, type, bytes);
+            if (tcp && ConnectedTcp) this.tcp.send(key, type, bytes);
         }
     }
 }

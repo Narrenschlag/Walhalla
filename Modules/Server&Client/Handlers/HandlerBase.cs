@@ -8,7 +8,6 @@ namespace Walhalla
         public delegate void Packet(BufferType type, byte key, byte[] bytes);
         public delegate void Empty();
 
-
         public Packet? onReceive;
         public int Port;
 
@@ -37,19 +36,6 @@ namespace Walhalla
         {
             if (!Connected) throw new Exception($"{GetType()} is not connected");
         }
-        #endregion
-
-        #region Receive Data
-        protected virtual async Task _listen()
-        {
-            while (Connected)
-            {
-                try { await _receive(); }
-                catch { break; }
-            }
-        }
-
-        protected virtual async Task _receive() { await Task.Yield(); }
         #endregion
     }
 }
