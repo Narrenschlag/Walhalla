@@ -12,6 +12,9 @@ namespace Walhalla
         protected TcpListener TcpListener;
         protected uint LastUID;
 
+        /// <summary> Amount of clients currently connected to the server </summary>
+        public uint ClientCount => Clients != null ? (uint)Clients.Count : 0;
+
         /// <summary> Simple server that handles tcp only </summary>
         public SimpleServer(int port = 5000)
         {
