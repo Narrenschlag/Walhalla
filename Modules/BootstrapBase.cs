@@ -19,7 +19,10 @@ namespace Walhalla
             // Boot Config and log
             Road p = new Road("configuration/boot.config");
             if (!p.TryRead(out Config) || Config == null)
-                p.Write(new BootConfiguration());
+            {
+                Config = new BootConfiguration();
+                p.Write(Config);
+            }
             LogConfig();
 
             "\nStarting...".Log();
