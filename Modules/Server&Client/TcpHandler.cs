@@ -5,19 +5,15 @@ using System;
 
 namespace Walhalla
 {
-    public class TcpHandler
+    public class TcpHandler : HandlerBase
     {
         public NetworkStream stream;
         public TcpClient client;
 
-        public delegate void TcpPacket(BufferType type, byte key, byte[]? bytes);
-        public TcpPacket? onReceive;
-
-        public delegate void Empty();
         public Empty? onDisconnect;
 
         /// <summary> Creates handle on server side </summary>
-        public TcpHandler(ref TcpClient client, uint welcome, TcpPacket onReceive, Empty onDisconnect, int receiveTimeout = 5)
+        public TcpHandler(ref TcpClient client, uint welcome, Packet onReceive, Empty onDisconnect, int receiveTimeout = 5) : base(0, onReceive)
         {
             client.ReceiveTimeout = 6000 * receiveTimeout;
 
@@ -25,14 +21,12 @@ namespace Walhalla
             this.client = client;
 
             this.onDisconnect = onDisconnect;
-            this.onReceive = onReceive;
-
             send(0, welcome);
-            _listen();
+            _ = _listen();
         }
 
         /// <summary> Creates handle on client side </summary>
-        public TcpHandler(string host, int port, TcpPacket onReceive, Empty onDisconnect)
+        public TcpHandler(string host, int port, Packet onReceive, Empty onDisconnect) : base(port, onReceive)
         {
             client = new TcpClient();
 
@@ -41,58 +35,56 @@ namespace Walhalla
             stream = client.GetStream();
 
             this.onDisconnect = onDisconnect;
-            this.onReceive = onReceive;
-
-            _listen();
+            _ = _listen();
         }
 
         /// <summary> Returns if the client is connected </summary>
-        public bool Connected => client != null && client.Connected;
+        public override bool Connected => client != null && client.Connected;
 
         /// <summary> Closes local network elements </summary>
-        public void close()
+        public override void Close()
         {
             if (stream != null) stream.Close();
             if (client != null) client.Close();
 
             onDisconnect = null;
-            onReceive = null;
+            base.Close();
         }
 
         #region Send Data
         /// <summary> Sends data through connection </summary>
-        public void send<T>(byte key, T? value, bool flush = true)
+        public override void send<T>(byte key, T value)
         {
+            base.send(key, value);
+
             stream.Write(value.encodeBytes(key));
-            if (flush) this.flush();
+            Flush();
         }
 
         /// <summary> Sends data through connection </summary>
-        public void send(byte key, BufferType type, byte[]? bytes, bool flush = true)
+        public override void send(byte key, BufferType type, byte[] bytes)
         {
+            base.send(key, type, bytes);
+
             if (bytes == null) bytes = new byte[0];
 
             stream.Write(bytes.encodeBytes(type, key));
-            if (flush) this.flush();
+            Flush();
         }
 
         /// <summary> Sends written data to server </summary>
-        public void flush() => stream.Flush();
+        public void Flush() => stream.Flush();
         #endregion
 
         #region Receive Data
-        private async void _listen()
+        protected override async Task _listen()
         {
-            while (Connected)
-            {
-                try { await _receive(); }
-                catch { break; }
-            }
+            await base._listen();
 
             _onDisconnect();
         }
 
-        private async Task _receive()
+        protected override async Task _receive()
         {
             // Define buffer for strorage
             byte[] buffer = new byte[4];
@@ -123,10 +115,10 @@ namespace Walhalla
 
         private void _onDisconnect()
         {
+            Close();
+
             if (onDisconnect != null)
                 onDisconnect();
-
-            close();
         }
     }
 }

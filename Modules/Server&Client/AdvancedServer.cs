@@ -2,20 +2,23 @@ using System.Net.Sockets;
 
 namespace Walhalla
 {
-    public class AdvancedServer : SimpleServer
+    public class AdvancedServer : TcpServer
     {
         public int UdpPort;
 
         /// <summary> Simple server that handles tcp and udp </summary>
-        public AdvancedServer(int tcpPort = 5000, int udpPort = 5001) : base(tcpPort)
+        public AdvancedServer(int tcpPort = 5000, int udpPort = 5001, bool accept = true) : base(tcpPort, false)
         {
             UdpPort = udpPort;
+
+            // Async client accept
+            if (accept) auth();
         }
 
         /// <summary> Creates new tcp/udp client </summary>
-        protected override void newClient(ref TcpClient tcp, uint uid)
+        protected override ClientBase newClient(ref TcpClient tcp, uint uid)
         {
-            new AdvancedClient(ref tcp, uid, ref Clients, UdpPort);
+            return new AdvancedClient(ref tcp, uid, ref Clients, UdpPort);
         }
     }
 
@@ -35,19 +38,19 @@ namespace Walhalla
             if (!tcp) udp.send(key, value);
         }
 
-        public override void send(byte key, BufferType type, byte[]? bytes, bool tcp)
+        public override void send(byte key, BufferType type, byte[] bytes, bool tcp)
         {
             base.send(key, type, bytes, tcp);
 
             if (!tcp) udp.send(key, type, bytes);
         }
 
-        private void receiveUdp(BufferType type, byte key, byte[]? bytes)
+        private void receiveUdp(BufferType type, byte key, byte[] bytes)
             => onReceive(type, key, bytes, false);
 
         public override void onDisconnect()
         {
-            udp.close();
+            udp.Close();
 
             base.onDisconnect();
         }

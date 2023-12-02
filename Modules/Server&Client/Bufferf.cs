@@ -157,7 +157,7 @@ namespace Walhalla
 
         #region Receiving
         /// <returns> Length, type, key and bytes, transmitted by buffer
-        public static byte[]? decodeBytes(this byte[] buffer, out int length, out BufferType type, out byte key)
+        public static byte[] decodeBytes(this byte[] buffer, out int length, out BufferType type, out byte key)
         {
             if (buffer == null || buffer.Length < 6)
             {
@@ -165,7 +165,7 @@ namespace Walhalla
                 length = 0;
                 key = 0;
 
-                return null;
+                return [];
             }
 
             byte[] bytes = new byte[buffer.Length - 6];
