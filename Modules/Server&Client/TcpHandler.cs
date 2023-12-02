@@ -1,7 +1,7 @@
+using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.IO;
 using System;
-using System.Threading.Tasks;
 
 namespace Walhalla
 {
@@ -16,6 +16,7 @@ namespace Walhalla
         public delegate void Empty();
         public Empty? onDisconnect;
 
+        /// <summary> Creates handle on server side </summary>
         public TcpHandler(ref TcpClient client, uint welcome, TcpPacket onReceive, Empty onDisconnect, int receiveTimeout = 5)
         {
             client.ReceiveTimeout = 6000 * receiveTimeout;
@@ -30,6 +31,7 @@ namespace Walhalla
             _listen();
         }
 
+        /// <summary> Creates handle on client side </summary>
         public TcpHandler(string host, int port, TcpPacket onReceive, Empty onDisconnect)
         {
             client = new TcpClient();
@@ -44,7 +46,10 @@ namespace Walhalla
             _listen();
         }
 
+        /// <summary> Returns if the client is connected </summary>
         public bool Connected => client != null && client.Connected;
+
+        /// <summary> Closes local network elements </summary>
         public void close()
         {
             if (stream != null) stream.Close();
@@ -55,12 +60,14 @@ namespace Walhalla
         }
 
         #region Send Data
+        /// <summary> Sends data through connection </summary>
         public void send<T>(byte key, T? value, bool flush = true)
         {
             stream.Write(value.encodeBytes(key));
             if (flush) this.flush();
         }
 
+        /// <summary> Sends data through connection </summary>
         public void send(BufferType type, byte key, byte[]? bytes, bool flush = true)
         {
             if (bytes == null) bytes = new byte[0];
@@ -69,6 +76,7 @@ namespace Walhalla
             if (flush) this.flush();
         }
 
+        /// <summary> Sends written data to server </summary>
         public void flush() => stream.Flush();
         #endregion
 

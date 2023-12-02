@@ -1,95 +1,119 @@
 using System.Net.Sockets;
 using System.Net;
-using System.Text;
-using System.ComponentModel;
-using System.Numerics;
-using System.Dynamic;
+using Walhalla;
 
 namespace Walhalla
 {
     public class SimpleServer
     {
-        public Dictionary<uint, SimpleClient> Clients;
+        public Dictionary<uint, ClientBase> Clients;
+        public int Port;
+
         protected TcpListener TcpListener;
         protected uint LastUID;
 
+        /// <summary> Simple server that handles tcp only </summary>
         public SimpleServer(int port = 5000)
         {
-            Clients = new Dictionary<uint, SimpleClient>();
+            Clients = new Dictionary<uint, ClientBase>();
             LastUID = 0;
+            Port = port;
 
             TcpListener = new TcpListener(IPAddress.Loopback, port);
             TcpListener.Start(10);
 
             // Async client accept
-            welcome();
+            accept();
         }
 
         /// <summary>
-        /// Handles all incomming connections and assigns them to an id
+        /// Handles all incomming connections and assigns them to an id<br/>
         /// Then it starts listening to them
         /// </summary>
-        protected virtual async void welcome()
+        protected virtual async void accept()
         {
             TcpClient tcp = await TcpListener.AcceptTcpClientAsync();  //if a connection exists, the server will accept it
 
             lock (this)
             {
-                SimpleClient client = new SimpleClient(ref tcp, LastUID++, this);
+                newClient(ref tcp, LastUID++);
             }
 
-            welcome();  // welcome other clients
+            accept();  // welcome other clients
+        }
+
+        /// <summary> Creates new tcp-only client </summary>
+        protected virtual void newClient(ref TcpClient tcp, uint uid)
+        {
+            new SimpleClient(ref tcp, uid, ref Clients);
         }
     }
 
-    public class SimpleClient
+    public class SimpleClient : ClientBase
     {
-        public TcpHandler tcpHandler;
+        public TcpHandler tcp;
 
-        protected SimpleServer source;
-        public uint UID;
-
-        public SimpleClient(ref TcpClient client, uint uid, SimpleServer source)
+        public SimpleClient(ref TcpClient client, uint uid, ref Dictionary<uint, ClientBase> registry) : base(uid, ref registry)
         {
-            $"+++ Connected [{uid}]".Log();
-            this.source = source;
-            UID = uid;
-
-            lock (source.Clients)
-            {
-                source.Clients.Add(uid, this);
-            }
-
-            tcpHandler = new TcpHandler(ref client, uid, receiveTcp, onDisconnect);
-        }
-
-        public virtual void send<T>(byte key, T value, bool tcp)
-        {
-            if (tcp) tcpHandler.send(key, value);
-        }
-
-        public virtual void send(BufferType type, byte key, byte[]? bytes, bool tcp)
-        {
-            if (tcp) tcpHandler.send(type, key, bytes);
+            tcp = new TcpHandler(ref client, uid, receiveTcp, onDisconnect);
         }
 
         private void receiveTcp(BufferType type, byte key, byte[]? bytes)
             => onReceive(type, key, bytes, true);
 
-        public virtual void onReceive(BufferType type, byte key, byte[]? bytes, bool tcp)
+        public override void send<T>(byte key, T value, bool tcp)
         {
-
+            if (tcp) this.tcp.send(key, value);
         }
 
-        // TODO: Fix instant disconnect
-        public virtual void onDisconnect()
+        public override void send(BufferType type, byte key, byte[]? bytes, bool tcp)
         {
-            $"--- Disconnected [{UID}]".Log();
+            if (tcp) this.tcp.send(type, key, bytes);
+        }
+    }
+}
 
-            lock (source.Clients)
-            {
-                source.Clients.Remove(UID);
-            }
+public class ClientBase
+{
+    protected Dictionary<uint, ClientBase> Registry;
+    public uint UID;
+
+    public ClientBase(uint uid, ref Dictionary<uint, ClientBase> registry)
+    {
+        $"+++ Connected [{uid}]".Log();
+
+        Registry = registry;
+        UID = uid;
+
+        lock (Registry)
+        {
+            Registry.Add(UID, this);
+        }
+    }
+
+    public virtual void send<T>(byte key, T value, bool tcp)
+    {
+
+    }
+
+    public virtual void send(BufferType type, byte key, byte[]? bytes, bool tcp)
+    {
+
+    }
+
+    /// <summary> Handles incomming traffic </summary>
+    public virtual void onReceive(BufferType type, byte key, byte[]? bytes, bool tcp)
+    {
+        $"Received: [{type}] sizeof({(bytes == null ? "0" : bytes.Length)}) as {key}".Log();
+    }
+
+    public virtual void onDisconnect()
+    {
+        $"--- Disconnected [{UID}]".Log();
+
+        lock (Registry)
+        {
+            Registry.Remove(UID);
         }
     }
 }
