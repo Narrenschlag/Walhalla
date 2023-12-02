@@ -63,10 +63,10 @@ namespace Walhalla
                 case BufferType.Byte: return (T)(object)bytes[0];
 
                 case BufferType.Short: return (T)(object)BitConverter.ToInt16(bytes);
-                case BufferType.UnsignedShort: return (T)(object)(BitConverter.ToInt16(bytes) + short.MaxValue + 1);
+                case BufferType.UnsignedShort: return (T)(object)BitConverter.ToUInt16(bytes);
 
                 case BufferType.Integer: return (T)(object)BitConverter.ToInt32(bytes);
-                case BufferType.UnsignedInteger: return (T)(object)(BitConverter.ToInt32(bytes) + int.MaxValue + 1);
+                case BufferType.UnsignedInteger: return (T)(object)BitConverter.ToUInt32(bytes);
 
                 case BufferType.Float: return (T)(object)BitConverter.ToSingle(bytes);
                 case BufferType.Double: return (T)(object)BitConverter.ToDouble(bytes);
