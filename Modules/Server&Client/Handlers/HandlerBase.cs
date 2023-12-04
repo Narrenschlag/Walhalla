@@ -5,7 +5,7 @@ namespace Walhalla
 {
     public class HandlerBase
     {
-        public delegate void Packet(BufferType type, byte key, byte[] bytes);
+        public delegate void Packet(byte key, BufferType type, byte[] bytes);
         public delegate void Empty();
 
         public Packet? onReceive;

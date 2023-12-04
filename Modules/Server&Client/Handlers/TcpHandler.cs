@@ -117,7 +117,7 @@ namespace Walhalla
             Array.Copy(bytes, 0, buffer, 4, length);
 
             bytes = Bufferf.decodeBytes(buffer, out length, out BufferType type, out byte key);
-            if (onReceive != null && type != BufferType.None) onReceive(type, key, bytes);
+            if (onReceive != null && type != BufferType.None) onReceive(key, type, bytes);
         }
         #endregion
 

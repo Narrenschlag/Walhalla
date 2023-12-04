@@ -17,7 +17,7 @@ namespace Walhalla
         public virtual void send<T>(byte key, T value, bool tcp) { }
 
         /// <summary> Handles incomming traffic </summary>
-        public virtual void onReceive(BufferType type, byte key, byte[]? bytes, bool tcp)
+        public virtual void onReceive(byte key, BufferType type, byte[]? bytes, bool tcp)
         {
             $"Received: [{type}] sizeof({(bytes == null ? "0" : bytes.Length)}) as {key}".Log();
         }

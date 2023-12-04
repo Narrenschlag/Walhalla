@@ -96,8 +96,8 @@ namespace Walhalla
         public virtual bool Connected => ConnectedTcp;
         public bool ConnectedTcp => tcp != null && tcp.Connected;
 
-        private void receiveTcp(BufferType type, byte key, byte[] bytes)
-            => onReceive(type, key, bytes, true);
+        private void receiveTcp(byte key, BufferType type, byte[] bytes)
+            => onReceive(key, type, bytes, true);
 
         public override void send<T>(byte key, T value, bool tcp)
         {
