@@ -19,7 +19,7 @@ namespace Walhalla
         /// <summary> Handles incomming traffic </summary>
         public virtual void onReceive(byte key, BufferType type, byte[]? bytes, bool tcp)
         {
-            $"Received: [{type}] sizeof({(bytes == null ? "0" : bytes.Length)}) as {key}".Log();
+            $"{UID}> {(tcp ? "tcp" : "udp")}-package: {key} ({type}, {(bytes == null ? 0 : bytes.Length)})".Log();
         }
 
         public virtual void onDisconnect()

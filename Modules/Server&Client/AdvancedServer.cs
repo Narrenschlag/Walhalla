@@ -7,6 +7,7 @@ namespace Walhalla
     public class AdvancedServer : TcpServer
     {
         public Dictionary<IPEndPoint, AdvancedClient> Endpoints;
+        public Dictionary<IPAddress, AdvancedClient> Queue;
         public UdpHandler globalUdp;
         public int UdpPort;
 
@@ -14,6 +15,7 @@ namespace Walhalla
         public AdvancedServer(int tcpPort = 5000, int udpPort = 5001, bool accept = true) : base(tcpPort, false)
         {
             Endpoints = new Dictionary<IPEndPoint, AdvancedClient>();
+            Queue = new Dictionary<IPAddress, AdvancedClient>();
             UdpPort = udpPort;
 
             globalUdp = new UdpHandler(udpPort, _receiveUdp);
@@ -25,13 +27,16 @@ namespace Walhalla
         /// <summary> Creates new tcp/udp client </summary>
         protected override ClientBase newClient(ref TcpClient tcp, uint uid)
         {
-            AdvancedClient client = new AdvancedClient(ref tcp, uid, ref Clients, UdpPort);
+            AdvancedClient client = new AdvancedClient(ref tcp, uid, ref Clients, this);
 
             if (client.endPoint != null)
-                lock (Endpoints)
+                lock (Queue)
                 {
-                    if (Endpoints.ContainsKey(client.endPoint)) Endpoints[client.endPoint] = client;
-                    else Endpoints.Add(client.endPoint, client);
+                    IPAddress addr = client.endPoint.Address;
+                    $"Register: {addr}".Log();
+
+                    if (Queue.ContainsKey(addr)) Queue[addr] = client;
+                    else Queue.Add(addr, client);
                 }
 
             return client;
@@ -39,9 +44,21 @@ namespace Walhalla
 
         private void _receiveUdp(byte key, BufferType type, byte[] bytes, IPEndPoint endpoint)
         {
-            lock (Endpoints)
+            lock (this)
             {
-                if (Endpoints.TryGetValue(endpoint, out AdvancedClient? client))
+                // Move queued element to endpoint registry
+                if (!Endpoints.TryGetValue(endpoint, out AdvancedClient? client))
+                {
+                    if (Queue.TryGetValue(endpoint.Address, out client))
+                    {
+                        Endpoints.Add(endpoint, client);
+                        Queue.Remove(endpoint.Address);
+
+                        client.connect(endpoint);
+                    }
+                }
+
+                if (client != null)
                     client.onReceive(key, type, bytes, false);
             }
         }
@@ -49,18 +66,23 @@ namespace Walhalla
 
     public class AdvancedClient : SimpleClient
     {
+        public AdvancedServer server;
         public IPEndPoint? endPoint;
         public UdpHandler? udp;
 
-        public AdvancedClient(ref TcpClient client, uint uid, ref Dictionary<uint, ClientBase> registry, int udpPort) : base(ref client, uid, ref registry)
+        public AdvancedClient(ref TcpClient client, uint uid, ref Dictionary<uint, ClientBase> registry, AdvancedServer server) : base(ref client, uid, ref registry)
         {
             endPoint = client.Client.RemoteEndPoint as IPEndPoint;
+            this.server = server;
+            udp = null;
+        }
 
-            if (endPoint != null)
-            {
-                udp = new UdpHandler(endPoint.Address.ToString(), udpPort, _receiveUdp); // Use the same port as the UDP listener and the same adress as tcp endpoint
-            }
-            else udp = null;
+        public void connect(IPEndPoint finalSource)
+        {
+            if (endPoint == null) return;
+            endPoint = finalSource;
+
+            udp = new UdpHandler(endPoint.Address.ToString(), server.UdpPort, _receiveUdp); // Use the same port as the UDP listener and the same adress as tcp endpoint
         }
 
         public override bool Connected => base.Connected && ConnectedUdp;
@@ -89,6 +111,12 @@ namespace Walhalla
         public override void onDisconnect()
         {
             if (udp != null) udp.Close();
+
+            lock (server.Endpoints)
+            {
+                if (endPoint != null && server.Endpoints.ContainsKey(endPoint))
+                    server.Endpoints.Remove(endPoint);
+            }
 
             base.onDisconnect();
         }

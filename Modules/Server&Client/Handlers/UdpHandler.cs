@@ -8,10 +8,10 @@ namespace Walhalla
     public class UdpHandler : HandlerBase
     {
         public delegate void UdpPacket(byte key, BufferType type, byte[] bytes, IPEndPoint source);
-        public UdpPacket? serverSideReceive;
+        public UdpPacket serverSideReceive;
 
         private bool isServerClient;
-        public UdpClient? client;
+        public UdpClient client;
 
         /// <summary> Creates handle on server side </summary>
         public UdpHandler(int port, UdpPacket onReceive) : base(port, null)
@@ -21,13 +21,10 @@ namespace Walhalla
 
             try
             {
-                client = new UdpClient();
+                client = new UdpClient(port);
 
                 // Set the UDP client to reuse the address and port (optional)
                 client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-
-                // Bind the UDP client to a specific port
-                client.Client.Bind(new IPEndPoint(IPAddress.Any, port));
 
                 // Listens to udp signals
                 _listen();
@@ -52,7 +49,7 @@ namespace Walhalla
             _listen();
         }
 
-        public override bool Connected => client != null && client.Client.Connected;
+        public override bool Connected => client != null && (isServerClient ? true : client.Client.Connected);
 
         /// <summary> Closes local network elements </summary>
         public override void Close()
