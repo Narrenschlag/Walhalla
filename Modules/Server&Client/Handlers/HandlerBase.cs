@@ -5,7 +5,7 @@ namespace Walhalla
 {
     public class HandlerBase
     {
-        public delegate void Packet(byte key, BufferType type, byte[] bytes);
+        public delegate void Packet(byte key, BufferType type, byte[]? bytes);
         public delegate void Empty();
 
         public Packet? onReceive;
@@ -32,7 +32,7 @@ namespace Walhalla
         }
 
         /// <summary> Sends data through connection </summary>
-        public virtual void send(byte key, BufferType type, byte[] bytes)
+        public virtual void send(byte key, BufferType type, byte[]? bytes)
         {
             if (!Connected) throw new Exception($"{GetType()} is not connected");
         }

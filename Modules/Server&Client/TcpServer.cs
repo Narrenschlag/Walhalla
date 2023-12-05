@@ -96,7 +96,7 @@ namespace Walhalla
         public virtual bool Connected => ConnectedTcp;
         public bool ConnectedTcp => tcp != null && tcp.Connected;
 
-        private void receiveTcp(byte key, BufferType type, byte[] bytes)
+        private void receiveTcp(byte key, BufferType type, byte[]? bytes)
             => onReceive(key, type, bytes, true);
 
         public override void send<T>(byte key, T value, bool tcp)
@@ -106,7 +106,7 @@ namespace Walhalla
             if (tcp && ConnectedTcp) this.tcp.send(key, value);
         }
 
-        public override void send(byte key, BufferType type, byte[] bytes, bool tcp)
+        public override void send(byte key, BufferType type, byte[]? bytes, bool tcp)
         {
             base.send(key, type, bytes, tcp);
 

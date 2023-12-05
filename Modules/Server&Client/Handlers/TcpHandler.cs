@@ -62,7 +62,7 @@ namespace Walhalla
         }
 
         /// <summary> Sends data through connection </summary>
-        public override void send(byte key, BufferType type, byte[] bytes)
+        public override void send(byte key, BufferType type, byte[]? bytes)
         {
             base.send(key, type, bytes);
 
@@ -111,7 +111,7 @@ namespace Walhalla
                 length = BR.ReadInt32();
             }
 
-            byte[] bytes = new byte[length += 2];
+            byte[]? bytes = new byte[length += 2];
             await stream.ReadAsync(bytes, 0, length);
             Array.Resize(ref buffer, 4 + length);
             Array.Copy(bytes, 0, buffer, 4, length);

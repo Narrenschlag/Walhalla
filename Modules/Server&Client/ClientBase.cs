@@ -13,7 +13,7 @@ namespace Walhalla
             UID = uid;
         }
 
-        public virtual void send(byte key, BufferType type, byte[] bytes, bool tcp) { }
+        public virtual void send(byte key, BufferType type, byte[]? bytes, bool tcp) { }
         public virtual void send<T>(byte key, T value, bool tcp) { }
 
         /// <summary> Handles incomming traffic </summary>

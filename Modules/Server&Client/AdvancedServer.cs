@@ -44,7 +44,7 @@ namespace Walhalla
             return client;
         }
 
-        private void _receiveUdp(byte key, BufferType type, byte[] bytes, IPEndPoint endpoint)
+        private void _receiveUdp(byte key, BufferType type, byte[]? bytes, IPEndPoint endpoint)
         {
             lock (this)
             {
@@ -88,7 +88,7 @@ namespace Walhalla
         public override bool Connected => base.Connected && ConnectedUdp;
         public bool ConnectedUdp => endPoint != null;
 
-        public override void send(byte key, BufferType type, byte[] bytes, bool tcp)
+        public override void send(byte key, BufferType type, byte[]? bytes, bool tcp)
         {
             base.send(key, type, bytes, tcp);
 
@@ -106,6 +106,11 @@ namespace Walhalla
             {
                 server.globalUdp.send(key, value, endPoint);
             }
+        }
+
+        public override void onReceive(byte key, BufferType type, byte[]? bytes, bool tcp)
+        {
+            base.onReceive(key, type, bytes, tcp);
         }
 
         public override void onDisconnect()
