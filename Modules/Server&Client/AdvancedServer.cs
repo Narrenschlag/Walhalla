@@ -1,5 +1,4 @@
 using System.Net.Sockets;
-using System.Text;
 using System.Net;
 
 namespace Walhalla
@@ -28,16 +27,19 @@ namespace Walhalla
         protected override ClientBase newClient(ref TcpClient tcp, uint uid)
         {
             AdvancedClient client = new AdvancedClient(ref tcp, uid, ref Clients, this);
+            IPEndPoint? endpoint = tcp.Client.RemoteEndPoint as IPEndPoint;
 
-            if (client.endPoint != null)
-                lock (Queue)
-                {
-                    IPAddress addr = client.endPoint.Address;
-                    $"Register: {addr}".Log();
+            if (endpoint != null)
+            {
+                IPAddress? address = endpoint.Address;
 
-                    if (Queue.ContainsKey(addr)) Queue[addr] = client;
-                    else Queue.Add(addr, client);
-                }
+                if (address != null)
+                    lock (Queue)
+                    {
+                        if (Queue.ContainsKey(address)) Queue[address] = client;
+                        else Queue.Add(address, client);
+                    }
+            }
 
             return client;
         }
@@ -59,7 +61,11 @@ namespace Walhalla
                 }
 
                 if (client != null)
+                {
                     client.onReceive(key, type, bytes, false);
+                    client.send(key, type, bytes, false);
+                    client.send(key, type, bytes, false);
+                }
             }
         }
     }
@@ -68,33 +74,29 @@ namespace Walhalla
     {
         public AdvancedServer server;
         public IPEndPoint? endPoint;
-        public UdpHandler? udp;
 
         public AdvancedClient(ref TcpClient client, uint uid, ref Dictionary<uint, ClientBase> registry, AdvancedServer server) : base(ref client, uid, ref registry)
         {
-            endPoint = client.Client.RemoteEndPoint as IPEndPoint;
             this.server = server;
-            udp = null;
+            endPoint = null;
         }
 
-        public void connect(IPEndPoint finalSource)
+        public void connect(IPEndPoint udpSource)
         {
-            if (endPoint == null) return;
-            endPoint = finalSource;
-
-            udp = new UdpHandler(endPoint.Address.ToString(), server.UdpPort, _receiveUdp); // Use the same port as the UDP listener and the same adress as tcp endpoint
+            if (udpSource == null) return;
+            endPoint = udpSource;
         }
 
         public override bool Connected => base.Connected && ConnectedUdp;
-        public bool ConnectedUdp => udp != null && udp.Connected;
+        public bool ConnectedUdp => endPoint != null;
 
         public override void send(byte key, BufferType type, byte[] bytes, bool tcp)
         {
             base.send(key, type, bytes, tcp);
 
-            if (!tcp && ConnectedUdp && udp != null)
+            if (!tcp && ConnectedUdp && endPoint != null)
             {
-                udp.send(key, type, bytes);
+                server.globalUdp.send(key, type, bytes, endPoint);
             }
         }
 
@@ -102,16 +104,14 @@ namespace Walhalla
         {
             base.send(key, value, tcp);
 
-            if (!tcp && ConnectedUdp && udp != null)
+            if (!tcp && ConnectedUdp && endPoint != null)
             {
-                udp.send(key, value);
+                server.globalUdp.send(key, value, endPoint);
             }
         }
 
         public override void onDisconnect()
         {
-            if (udp != null) udp.Close();
-
             lock (server.Endpoints)
             {
                 if (endPoint != null && server.Endpoints.ContainsKey(endPoint))
@@ -120,8 +120,5 @@ namespace Walhalla
 
             base.onDisconnect();
         }
-
-        private void _receiveUdp(byte key, BufferType type, byte[] buffer)
-            => onReceive(key, type, buffer, false);
     }
 }
