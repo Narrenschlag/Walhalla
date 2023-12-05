@@ -63,8 +63,6 @@ namespace Walhalla
                 if (client != null)
                 {
                     client.onReceive(key, type, bytes, false);
-                    client.send(key, type, bytes, false);
-                    client.send(key, type, bytes, false);
                 }
             }
         }
