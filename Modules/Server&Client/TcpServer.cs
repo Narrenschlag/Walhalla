@@ -8,6 +8,8 @@ namespace Walhalla
         public Dictionary<uint, ClientBase> Clients;
         public int TcpPort;
 
+        public bool AcceptNewClients;
+
         protected TcpListener TcpListener;
         protected uint LastUID;
 
@@ -18,6 +20,7 @@ namespace Walhalla
         public TcpServer(int port = 5000, bool accept = true)
         {
             Clients = new Dictionary<uint, ClientBase>();
+            AcceptNewClients = true;
             TcpPort = port;
             LastUID = 0;
 
@@ -34,15 +37,25 @@ namespace Walhalla
         /// </summary>
         protected virtual async void auth()
         {
-            TcpClient tcp = await TcpListener.AcceptTcpClientAsync();  //if a connection exists, the server will accept it
+            // Ignore new connections
+            if (!AcceptNewClients)
+            {
+                await Task.Delay(100);
+                auth();
+            }
 
+            // If a connection exists, the server will accept it
+            TcpClient tcp = await TcpListener.AcceptTcpClientAsync();
+
+            // Register client
             lock (Clients)
             {
                 ClientBase @base = newClient(ref tcp, LastUID++);
                 if (@base != null) Clients.Add(@base.UID, @base);
             }
 
-            auth();  // welcome other clients
+            // Welcome other clients
+            auth();
         }
 
         /// <summary> Creates new tcp-only client </summary>
