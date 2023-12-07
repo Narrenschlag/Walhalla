@@ -73,10 +73,17 @@ namespace Walhalla
         public AdvancedServer server;
         public IPEndPoint? endPoint;
 
+        public delegate void ClientAdd(AdvancedClient client);
+        public static ClientAdd? onClientJoin, onClientQuit;
+
         public AdvancedClient(ref TcpClient client, uint uid, ref Dictionary<uint, ClientBase> registry, AdvancedServer server) : base(ref client, uid, ref registry)
         {
             this.server = server;
             endPoint = null;
+
+            // Notify other classes
+            if (onClientJoin != null)
+                onClientJoin(this);
         }
 
         public void connect(IPEndPoint udpSource)
@@ -115,6 +122,11 @@ namespace Walhalla
 
         public override void onDisconnect()
         {
+            // Notify other classes
+            if (onClientQuit != null)
+                onClientQuit(this);
+
+            // Remove from endpoints
             lock (server.Endpoints)
             {
                 if (endPoint != null && server.Endpoints.ContainsKey(endPoint))
