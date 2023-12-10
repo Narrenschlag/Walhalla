@@ -3,7 +3,10 @@ namespace Walhalla
     public class ClientBase
     {
         public delegate void PacketReceive(byte key, BufferType type, byte[]? bytes, bool tcp);
+        public delegate void Disconnect(ClientBase client);
+
         public PacketReceive? onReceiveAll;
+        public Disconnect? onClose;
 
         protected Dictionary<uint, ClientBase> Registry;
         public uint UID;
@@ -32,6 +35,9 @@ namespace Walhalla
         public virtual void onDisconnect()
         {
             $"--- Disconnected [{UID}]".Log();
+
+            if (onClose != null)
+                onClose(this);
 
             lock (Registry)
             {

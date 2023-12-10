@@ -129,6 +129,8 @@ namespace Walhalla
 
         public override void onDisconnect()
         {
+            base.onDisconnect();
+
             // Notify other classes
             if (onClientQuit != null)
                 onClientQuit(this);
@@ -139,8 +141,6 @@ namespace Walhalla
                 if (endPoint != null && server.Endpoints.ContainsKey(endPoint))
                     server.Endpoints.Remove(endPoint);
             }
-
-            base.onDisconnect();
         }
     }
 }
