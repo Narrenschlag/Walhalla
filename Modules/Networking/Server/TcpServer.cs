@@ -101,8 +101,13 @@ namespace Walhalla
     {
         public TcpHandler tcp;
 
-        public SimpleClient(ref TcpClient client, uint uid, ref Dictionary<uint, ClientBase> registry) : base(uid, ref registry)
+        public delegate void PacketReceiveBy(byte key, BufferType type, byte[]? bytes);
+        public PacketReceiveBy? onReceiveTcp;
+
+        public SimpleClient(ref TcpClient client, uint uid, ref Dictionary<uint, ClientBase> registry, PacketReceiveBy? onReceiveTcp = null, PacketReceive? onReceiveAll = null) : base(uid, ref registry, onReceiveAll)
         {
+            this.onReceiveTcp = onReceiveTcp;
+
             tcp = new TcpHandler(ref client, uid, receiveTcp, onDisconnect);
         }
 
@@ -124,6 +129,14 @@ namespace Walhalla
             base.send(key, type, bytes, tcp);
 
             if (tcp && ConnectedTcp) this.tcp.send(key, type, bytes);
+        }
+
+        public override void onReceive(byte key, BufferType type, byte[]? bytes, bool tcp)
+        {
+            base.onReceive(key, type, bytes, tcp);
+
+            if (tcp && onReceiveTcp != null)
+                onReceiveTcp(key, type, bytes);
         }
     }
 }

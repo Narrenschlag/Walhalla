@@ -76,10 +76,14 @@ namespace Walhalla
         public delegate void ClientAdd(AdvancedClient client);
         public static ClientAdd? onClientJoin, onClientQuit;
 
-        public AdvancedClient(ref TcpClient client, uint uid, ref Dictionary<uint, ClientBase> registry, AdvancedServer server) : base(ref client, uid, ref registry)
+        public PacketReceiveBy? onReceiveUdp;
+
+        public AdvancedClient(ref TcpClient client, uint uid, ref Dictionary<uint, ClientBase> registry, AdvancedServer server, PacketReceiveBy? onReceiveTcp = null, PacketReceiveBy? onReceiveUdp = null, PacketReceive? onReceiveAll = null) : base(ref client, uid, ref registry, onReceiveTcp, onReceiveAll)
         {
             this.server = server;
             endPoint = null;
+
+            this.onReceiveUdp = onReceiveUdp;
 
             // Notify other classes
             if (onClientJoin != null)
@@ -118,6 +122,9 @@ namespace Walhalla
         public override void onReceive(byte key, BufferType type, byte[]? bytes, bool tcp)
         {
             base.onReceive(key, type, bytes, tcp);
+
+            if (!tcp && onReceiveUdp != null)
+                onReceiveUdp(key, type, bytes);
         }
 
         public override void onDisconnect()
